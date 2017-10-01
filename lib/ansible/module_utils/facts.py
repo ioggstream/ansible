@@ -160,6 +160,8 @@ class Facts(object):
                  { 'path' : '/usr/sbin/sorcery',    'name' : 'sorcery' },
                 ]
 
+    STRIP_QUOTES = r'\'\"\\'
+
     def __init__(self, module, load_on_init=True, cached_facts=None):
 
         self.module = module
@@ -437,6 +439,11 @@ class Facts(object):
 
         if 'lsb' in self.facts and 'release' in self.facts['lsb']:
             self.facts['lsb']['major_release'] = self.facts['lsb']['release'].split('.')[0]
+
+        # Strip quotes.
+        for k, v in self.facts.get('lsb', {}).items():
+            if v:
+                self.facts['lsb'][k] = v.strip(Facts.STRIP_QUOTES)
 
     def get_selinux_facts(self):
         if not HAVE_SELINUX:
@@ -731,6 +738,8 @@ class Distribution(object):
                     continue
 
                 data = get_file_content(path)
+                # Eventually strip quotes.
+                data = data.strip(Facts.STRIP_QUOTES)
                 if name in self.SEARCH_STRING:
                     # look for the distribution string in the data and replace according to RELEASE_NAME_MAP
                     # only the distribution name is set, the version is assumed to be correct from platform.dist()
